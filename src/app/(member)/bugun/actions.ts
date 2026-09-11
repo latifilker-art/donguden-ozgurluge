@@ -17,5 +17,6 @@ export async function toggleRhythmItem(entryId: string): Promise<void> {
     return;
   }
 
+  revalidatePath("/bugun");
   revalidatePath("/profilim");
 }

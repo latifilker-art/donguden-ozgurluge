@@ -2,42 +2,7 @@ import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
-import { toggleRhythmItem } from "./actions";
-import type { AccessLogEntry, ExternalWork, RhythmEntry, RhythmItem } from "@/lib/types";
-
-const RHYTHM_META: Record<
-  RhythmItem,
-  { time: string; title: string; desc: string }
-> = {
-  morning_affirmation: {
-    time: "07:00",
-    title: "Sabah Olumlaması",
-    desc: "Güne başlamadan önce 3 olumlama",
-  },
-  breath: {
-    time: "GÜN İÇİ",
-    title: "Nefes Çalışması",
-    desc: "Kendi hızında bir nefes pratiği",
-  },
-  noon_affirmation: {
-    time: "13:00",
-    title: "Öğlen Olumlaması",
-    desc: "Öğlen molasında kısa bir hatırlatma",
-  },
-  evening_questions: {
-    time: "21:00",
-    title: "Akşam Dönüştürücü Sorular",
-    desc: "Günü kapatan 3 soru — gece okunur",
-  },
-};
-
-function formatIstanbulTime(iso: string) {
-  return new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
+import type { AccessLogEntry, ExternalWork, RhythmEntry } from "@/lib/types";
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("tr-TR", {
@@ -180,111 +145,21 @@ export default async function ProfilimPage() {
 
           {/* ---- Main ---- */}
           <main className="flex flex-col gap-6">
-            <section>
-              <div className="mb-3 flex items-baseline justify-between">
+            <Link
+              href="/bugun"
+              className="flex items-center justify-between rounded-xl border border-line bg-card p-5 shadow-sm transition hover:border-brand"
+            >
+              <div>
                 <h2 className="font-display text-[17px]">Bugünün Ritmi</h2>
-                <span className="font-mono text-[11px] text-ink-faint">
-                  {formatDate(new Date().toISOString())}
-                </span>
+                <p className="mt-0.5 text-sm text-ink-soft">
+                  {formatDate(new Date().toISOString())} — günlük pratiğini
+                  görmek için Bugün&apos;e git
+                </p>
               </div>
-              <div className="rounded-xl border border-line bg-card p-1.5 shadow-sm">
-                {rhythm.map((entry) => {
-                  const meta = RHYTHM_META[entry.item];
-                  const isDone = !!entry.completed_at;
-                  const isLocked =
-                    !isDone &&
-                    !!entry.unlock_at &&
-                    new Date(entry.unlock_at) > new Date();
-
-                  return (
-                    <div
-                      key={entry.id}
-                      className="grid grid-cols-[60px_1fr_84px] items-center gap-4 border-b border-line-soft px-4 py-3.5 last:border-b-0"
-                    >
-                      <div className="rounded-md bg-surface-2 py-1.5 text-center font-mono text-[10px] text-ink-faint">
-                        {meta.time}
-                      </div>
-                      <div>
-                        <div className="text-[13.5px] font-semibold">
-                          {meta.title}
-                        </div>
-                        <div className="mt-0.5 text-xs text-ink-soft">
-                          {meta.desc}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <form action={toggleRhythmItem.bind(null, entry.id)}>
-                          <button
-                            type="submit"
-                            disabled={isLocked}
-                            aria-pressed={isDone}
-                            aria-label={
-                              isLocked
-                                ? `${meta.title} — ${formatIstanbulTime(entry.unlock_at!)}'de açılır`
-                                : isDone
-                                  ? `${meta.title} tamamlandı — işareti kaldırmak için tıkla`
-                                  : `${meta.title} — tamamlandı olarak işaretle`
-                            }
-                            className={
-                              "flex h-[27px] w-[27px] items-center justify-center rounded-full border text-transparent " +
-                              (isDone
-                                ? "border-brand bg-brand-soft text-brand"
-                                : isLocked
-                                  ? "cursor-not-allowed border-dashed border-line bg-surface-2 text-ink-faint"
-                                  : "cursor-pointer border-line text-ink-faint hover:border-brand hover:text-brand")
-                            }
-                          >
-                            {isDone ? (
-                              <svg
-                                aria-hidden="true"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2.4}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-3.5 w-3.5"
-                              >
-                                <path d="M20 6 9 17l-5-5" />
-                              </svg>
-                            ) : isLocked ? (
-                              <svg
-                                aria-hidden="true"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-3.5 w-3.5"
-                              >
-                                <circle cx="12" cy="12" r="9" />
-                                <path d="M12 7v5l3 2" />
-                              </svg>
-                            ) : (
-                              <svg
-                                aria-hidden="true"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                              >
-                                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                              </svg>
-                            )}
-                          </button>
-                        </form>
-                        <span className="font-mono text-[10px] whitespace-nowrap text-ink-faint">
-                          {isLocked
-                            ? `${formatIstanbulTime(entry.unlock_at!)}'de açılır`
-                            : !isDone
-                              ? "henüz yapılmadı"
-                              : null}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+              <span className="shrink-0 font-mono text-lg text-brand">
+                {completedToday} / 4
+              </span>
+            </Link>
 
             <section>
               <div className="mb-3 flex items-baseline justify-between">
