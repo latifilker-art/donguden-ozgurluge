@@ -126,7 +126,7 @@ export default async function DuyurularPage({
             const spotsLeft = ev.capacity - joinedCount;
             const isFull = spotsLeft <= 0;
             const myStatus = myStatusByEvent.get(ev.id);
-            const hostName = ev.host?.profile?.display_name ?? "Sükunet";
+            const hostName = ev.host?.profile?.display_name ?? "Döngüden Özgürlüğe";
 
             return (
               <div

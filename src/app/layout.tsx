@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sükunet",
+  title: "Döngüden Özgürlüğe",
   description:
     "Kişiye özel günlük pratik, nefes çalışmaları ve eğitmen rehberliği sunan farkındalık üyeliği.",
 };

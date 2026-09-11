@@ -17,8 +17,8 @@ export function AppBar({ active }: { active?: TabHref }) {
         href="/"
         className="flex items-center gap-2.5 font-display text-base italic text-brand"
       >
-        <span className="h-2 w-2 rounded-full bg-brand" aria-hidden="true" />
-        Sükunet
+        <span className="h-2 w-2 shrink-0 rounded-full bg-brand" aria-hidden="true" />
+        Döngüden Özgürlüğe
       </Link>
       <nav className="flex flex-wrap gap-1">
         {TABS.map((tab) => (
