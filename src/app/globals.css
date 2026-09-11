@@ -1,0 +1,172 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Sükunet brand tokens — light */
+  --background: #eef1ec;
+  --surface: #ffffff;
+  --surface-2: #e6eae3;
+  --ink: #1b2a26;
+  --ink-soft: #4d5f58;
+  --ink-faint: #7c8a83;
+  --line: rgba(27, 42, 38, 0.14);
+  --line-soft: rgba(27, 42, 38, 0.08);
+  --brand: #3f6f5e;
+  --brand-ink: #f4f8f5;
+  --brand-soft: #dfe9e2;
+  --gold: #9c7a35;
+  --gold-soft: #f2e8d1;
+  --neg: #b6533f;
+  --neg-soft: #f7e6e1;
+  --radius: 0.75rem;
+
+  /* shadcn structural tokens, mapped onto the brand palette above */
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-ink);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-faint);
+  /* shadcn's "accent" is a neutral hover/highlight surface, not the brand color —
+     we intentionally point it at the brand color too, so hover/highlight states
+     read as brand-green everywhere, matching the artifact mockups. */
+  --accent: var(--brand);
+  --accent-foreground: var(--brand-ink);
+  --destructive: var(--neg);
+  --destructive-foreground: var(--brand-ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #101c18;
+    --surface: #17251f;
+    --surface-2: #1d2e26;
+    --ink: #e9efe9;
+    --ink-soft: #adbfb5;
+    --ink-faint: #7f9389;
+    --line: rgba(233, 239, 233, 0.14);
+    --line-soft: rgba(233, 239, 233, 0.08);
+    --brand: #79b79c;
+    --brand-ink: #0e1a15;
+    --brand-soft: #223a30;
+    --gold: #d7b56e;
+    --gold-soft: #362c17;
+    --neg: #e0836a;
+    --neg-soft: #3a2420;
+  }
+}
+
+.dark {
+  --background: #101c18;
+  --surface: #17251f;
+  --surface-2: #1d2e26;
+  --ink: #e9efe9;
+  --ink-soft: #adbfb5;
+  --ink-faint: #7f9389;
+  --line: rgba(233, 239, 233, 0.14);
+  --line-soft: rgba(233, 239, 233, 0.08);
+  --brand: #79b79c;
+  --brand-ink: #0e1a15;
+  --brand-soft: #223a30;
+  --gold: #d7b56e;
+  --gold-soft: #362c17;
+  --neg: #e0836a;
+  --neg-soft: #3a2420;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-neg: var(--neg);
+  --color-neg-soft: var(--neg-soft);
+
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
