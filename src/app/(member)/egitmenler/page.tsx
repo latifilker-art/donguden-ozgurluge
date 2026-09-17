@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
+import { Avatar } from "@/components/avatar";
 import { createClient } from "@/lib/supabase/server";
 
 const SPECIALTIES = [
@@ -16,7 +17,7 @@ type InstructorCard = {
   slug: string;
   tagline: string;
   specialties: string[];
-  profile: { display_name: string } | null;
+  profile: { display_name: string; avatar_url: string | null } | null;
   diplomas: { verified: boolean }[];
 };
 
@@ -40,7 +41,7 @@ export default async function EgitmenlerPage({
   let query = supabase
     .from("instructors")
     .select(
-      "id, slug, tagline, specialties, profile:profiles(display_name), diplomas(verified)",
+      "id, slug, tagline, specialties, profile:profiles(display_name, avatar_url), diplomas(verified)",
     )
     .order("slug");
 
@@ -92,9 +93,13 @@ export default async function EgitmenlerPage({
                   className="flex flex-col gap-3 rounded-xl border border-line bg-card p-5 shadow-sm transition hover:border-brand"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-brand font-display text-base font-semibold text-brand-ink">
-                      {name.slice(0, 2).toUpperCase()}
-                    </div>
+                    <Avatar
+                      name={name}
+                      avatarUrl={inst.profile?.avatar_url}
+                      size={46}
+                      rounded="rounded-xl"
+                      className="font-display text-base"
+                    />
                     <div>
                       <div className="text-[14.5px] font-bold">{name}</div>
                       <div className="text-[11.5px] text-ink-faint">

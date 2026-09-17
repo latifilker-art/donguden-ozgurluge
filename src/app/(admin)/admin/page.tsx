@@ -3,6 +3,11 @@ import { AppBar } from "@/components/app-bar";
 
 const SECTIONS = [
   {
+    href: "/admin/uyeler",
+    title: "Üye Onayı",
+    desc: "Yeni kayıtlar admin onayına düşer — onayla/reddet, tüm üyeleri durumlarıyla gör.",
+  },
+  {
     href: "/admin/destek",
     title: "Destek Görünümü",
     desc: "Bir üyeyi görüntülemek için önce sebep gir — her erişim üyenin kendi erişim günlüğüne yazılır.",
@@ -20,7 +25,12 @@ const SECTIONS = [
   {
     href: "/admin/uyelikler",
     title: "Üyelik Yönetimi",
-    desc: "Online ödeme yok — ödeme alındıktan sonra üyeliği elle aktif et.",
+    desc: "Temel, Premium ve VIP kademeleri arasında elle geçiş yap.",
+  },
+  {
+    href: "/admin/fotograflar",
+    title: "Fotoğraf Galerisi",
+    desc: "Etkinlik ve kamp fotoğrafları yükle, herkese açık galeriyi yönet.",
   },
 ];
 

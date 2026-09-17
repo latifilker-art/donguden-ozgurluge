@@ -1,16 +1,36 @@
 import Link from "next/link";
+import { Avatar } from "@/components/avatar";
+import { createClient } from "@/lib/supabase/server";
 
 const TABS = [
   { href: "/bugun", label: "Bugün" },
   { href: "/programlar", label: "Programlar" },
   { href: "/egitmenler", label: "Eğitmenler" },
   { href: "/duyurular", label: "Duyurular" },
+  { href: "/fotograflar", label: "Fotoğraflar" },
   { href: "/profilim", label: "Profilim" },
 ] as const;
 
 type TabHref = (typeof TABS)[number]["href"];
 
-export function AppBar({ active }: { active?: TabHref }) {
+export async function AppBar({ active }: { active?: TabHref }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let displayName = "?";
+  let avatarUrl: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .single();
+    displayName = profile?.display_name ?? user.email ?? "?";
+    avatarUrl = profile?.avatar_url ?? null;
+  }
+
   return (
     <header className="flex items-center justify-between gap-4 border-b border-line bg-card px-7 py-4">
       <Link
@@ -37,12 +57,13 @@ export function AppBar({ active }: { active?: TabHref }) {
           </Link>
         ))}
       </nav>
-      <div
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-bold text-brand-ink"
-        aria-hidden="true"
-      >
-        EK
-      </div>
+      {user ? (
+        <Link href="/profilim" aria-label="Profilim">
+          <Avatar name={displayName} avatarUrl={avatarUrl} size={32} className="text-xs" />
+        </Link>
+      ) : (
+        <Avatar name="?" size={32} className="text-xs" />
+      )}
     </header>
   );
 }

@@ -16,11 +16,16 @@ const supabase = createClient(
   env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-const { data, error } = await supabase
+const { data: profiles, error: e1 } = await supabase
   .from("profiles")
-  .select("id, display_name, subscriptions(plan, status, current_period_end)")
-  .eq("role", "member")
+  .select("display_name, status, role")
   .order("display_name");
+console.log("profiles status/role:", e1 ?? profiles);
 
-console.log("error:", JSON.stringify(error, null, 2));
-console.log("data:", JSON.stringify(data, null, 2));
+const { data: subs, error: e2 } = await supabase
+  .from("subscriptions")
+  .select("member_id, plan, status");
+console.log("subscriptions:", e2 ?? subs);
+
+const { data: buckets, error: e3 } = await supabase.storage.listBuckets();
+console.log("storage buckets:", e3 ?? buckets?.map((b) => b.id));

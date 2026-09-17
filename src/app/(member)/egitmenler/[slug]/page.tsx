@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppBar } from "@/components/app-bar";
+import { Avatar } from "@/components/avatar";
 import { BookingForm } from "@/components/booking-form";
 import { createClient } from "@/lib/supabase/server";
 import { requestAppointment } from "./actions";
@@ -11,7 +11,9 @@ type InstructorProfile = {
   tagline: string;
   bio: string;
   specialties: string[];
-  profile: { display_name: string } | null;
+  years_experience: number | null;
+  website_url: string | null;
+  profile: { display_name: string; avatar_url: string | null } | null;
   diplomas: {
     id: string;
     name: string;
@@ -38,7 +40,7 @@ export default async function EgitmenProfilPage({
   const { data } = await supabase
     .from("instructors")
     .select(
-      "id, slug, tagline, bio, specialties, profile:profiles(display_name), diplomas(id, name, issuer, year, verified), taught_programs(id, title, format, session_count)",
+      "id, slug, tagline, bio, specialties, years_experience, website_url, profile:profiles(display_name, avatar_url), diplomas(id, name, issuer, year, verified), taught_programs(id, title, format, session_count)",
     )
     .eq("slug", slug)
     .single();
@@ -65,9 +67,13 @@ export default async function EgitmenProfilPage({
         </p>
 
         <div className="mb-6 flex gap-5 rounded-xl border border-line bg-card p-6 shadow-sm">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-brand font-display text-3xl font-semibold text-brand-ink">
-            {name.slice(0, 2).toUpperCase()}
-          </div>
+          <Avatar
+            name={name}
+            avatarUrl={inst.profile?.avatar_url}
+            size={96}
+            rounded="rounded-2xl"
+            className="text-3xl"
+          />
           <div>
             <h1 className="font-display text-2xl">{name}</h1>
             <div className="mt-1 mb-3 text-sm text-ink-soft">{inst.tagline}</div>
@@ -81,6 +87,23 @@ export default async function EgitmenProfilPage({
                 </span>
               ))}
             </div>
+            {(inst.years_experience || inst.website_url) && (
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-ink-faint">
+                {inst.years_experience && (
+                  <span>{inst.years_experience} yıl deneyim</span>
+                )}
+                {inst.website_url && (
+                  <a
+                    href={inst.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-brand hover:underline"
+                  >
+                    Web sitesi ↗
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -179,26 +202,16 @@ export default async function EgitmenProfilPage({
             Bireysel Randevu İste
           </h2>
           <div className="rounded-xl border border-line bg-card p-5 shadow-sm">
-            {user ? (
-              user.id === inst.id ? (
-                <p className="text-sm text-ink-faint">
-                  Kendi profiline randevu isteyemezsin.
-                </p>
-              ) : (
-                <BookingForm
-                  instructorId={inst.id}
-                  sessionOptions={sessionOptions}
-                  action={requestAppointment}
-                />
-              )
-            ) : (
-              <p className="text-sm text-ink-soft">
-                Randevu istemek için{" "}
-                <Link href="/giris" className="font-semibold text-brand">
-                  giriş yapmalısın
-                </Link>
-                .
+            {user?.id === inst.id ? (
+              <p className="text-sm text-ink-faint">
+                Kendi profiline randevu isteyemezsin.
               </p>
+            ) : (
+              <BookingForm
+                instructorId={inst.id}
+                sessionOptions={sessionOptions}
+                action={requestAppointment}
+              />
             )}
           </div>
         </section>

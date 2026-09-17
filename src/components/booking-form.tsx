@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import type { RequestAppointmentState } from "@/app/(public)/egitmenler/[slug]/actions";
+import type { RequestAppointmentState } from "@/app/(member)/egitmenler/[slug]/actions";
 
 const initialState: RequestAppointmentState = { error: null };
 

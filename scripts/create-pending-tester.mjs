@@ -11,18 +11,17 @@ const env = Object.fromEntries(
     }),
 );
 
-// anon key ile — sayfanın kendisiyle aynı yetkiyle sorguluyoruz
 const supabase = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,
-  env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-const { data, error } = await supabase
-  .from("instructors")
-  .select(
-    "id, slug, tagline, specialties, profile:profiles(display_name), diplomas(verified)",
-  )
-  .order("slug");
+const { data, error } = await supabase.auth.admin.createUser({
+  email: "onay-bekleyen@sukunet.dev",
+  password: "sukunet-test-1234",
+  email_confirm: true, // e-posta onayını atlıyoruz, ama profiles.status trigger'dan 'pending' gelecek
+  user_metadata: { display_name: "Onay Bekleyen Üye" },
+});
 
-console.log("error:", JSON.stringify(error, null, 2));
-console.log("data:", JSON.stringify(data, null, 2));
+console.log("error:", error);
+console.log("user id:", data?.user?.id);

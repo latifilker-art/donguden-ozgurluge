@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
+import { Avatar } from "@/components/avatar";
+import { AvatarUploadInput } from "@/components/avatar-upload-input";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
+import { uploadAvatar, updateProfile } from "./actions";
 import type { AccessLogEntry, ExternalWork, RhythmEntry } from "@/lib/types";
 
 function formatDate(iso: string) {
@@ -19,6 +22,12 @@ const WORK_STATUS_LABEL: Record<string, string> = {
   completed: "Tamamlandı",
 };
 
+const TIER_LABEL: Record<string, { label: string; pill: string }> = {
+  temel: { label: "Temel", pill: "bg-surface-2 text-ink-soft" },
+  premium: { label: "Premium", pill: "bg-brand-soft text-brand" },
+  vip: { label: "VIP", pill: "bg-gold-soft text-gold" },
+};
+
 export default async function ProfilimPage() {
   const supabase = await createClient();
   const {
@@ -28,10 +37,10 @@ export default async function ProfilimPage() {
   // (member)/layout.tsx zaten girişsiz kullanıcıyı /giris'e yönlendiriyor.
   if (!user) return null;
 
-  const [profileRes, rhythmRes, worksRes, logRes] = await Promise.all([
+  const [profileRes, rhythmRes, worksRes, logRes, subRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name, created_at")
+      .select("display_name, bio, avatar_url, created_at")
       .eq("id", user.id)
       .single(),
     supabase.rpc("get_or_create_today_rhythm", { p_member_id: user.id }),
@@ -44,17 +53,22 @@ export default async function ProfilimPage() {
       .select("id, reason, scope, accessed_at, admin_id")
       .eq("member_id", user.id)
       .order("accessed_at", { ascending: false }),
+    supabase
+      .from("subscriptions")
+      .select("plan, status, current_period_end")
+      .eq("member_id", user.id)
+      .maybeSingle(),
   ]);
 
   const profile = profileRes.data;
   const rhythm = (rhythmRes.data ?? []) as RhythmEntry[];
   const works = (worksRes.data ?? []) as unknown as ExternalWork[];
   const accessLog = (logRes.data ?? []) as AccessLogEntry[];
+  const tier = subRes.data?.plan ?? "temel";
+  const tierMeta = TIER_LABEL[tier] ?? TIER_LABEL.temel;
 
   const completedToday = rhythm.filter((r) => r.completed_at).length;
-  const initials = (profile?.display_name ?? user.email ?? "?")
-    .slice(0, 2)
-    .toUpperCase();
+  const displayName = profile?.display_name ?? user.email ?? "?";
 
   return (
     <>
@@ -84,14 +98,26 @@ export default async function ProfilimPage() {
           {/* ---- Sidebar ---- */}
           <aside className="flex flex-col gap-4">
             <div className="rounded-xl border border-line bg-card p-6 text-center shadow-sm">
-              <div className="mx-auto mb-3 flex h-[62px] w-[62px] items-center justify-center rounded-full bg-brand font-display text-xl font-semibold text-brand-ink">
-                {initials}
-              </div>
-              <h2 className="font-display text-lg">
-                {profile?.display_name ?? user.email}
-              </h2>
+              <Avatar
+                name={displayName}
+                avatarUrl={profile?.avatar_url}
+                size={72}
+                className="mx-auto mb-3 text-2xl"
+              />
+              <form action={uploadAvatar} className="mb-3">
+                <label className="block cursor-pointer text-[11px] font-semibold text-brand hover:underline">
+                  Fotoğraf değiştir
+                  <AvatarUploadInput />
+                </label>
+              </form>
+              <h2 className="font-display text-lg">{displayName}</h2>
+              <span
+                className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold ${tierMeta.pill}`}
+              >
+                {tierMeta.label} üye
+              </span>
               {profile?.created_at && (
-                <div className="mt-0.5 text-xs text-ink-faint">
+                <div className="mt-2 text-xs text-ink-faint">
                   {formatDate(profile.created_at)}&apos;den beri üye
                 </div>
               )}
@@ -160,6 +186,52 @@ export default async function ProfilimPage() {
                 {completedToday} / 4
               </span>
             </Link>
+
+            <section>
+              <h2 className="mb-3 font-display text-[17px]">Hakkımda</h2>
+              <form
+                action={updateProfile}
+                className="flex flex-col gap-3 rounded-xl border border-line bg-card p-5 shadow-sm"
+              >
+                <div>
+                  <label
+                    htmlFor="displayName"
+                    className="mb-1.5 block text-xs font-semibold text-ink-soft"
+                  >
+                    Ad
+                  </label>
+                  <input
+                    id="displayName"
+                    name="displayName"
+                    defaultValue={displayName}
+                    required
+                    className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="bio"
+                    className="mb-1.5 block text-xs font-semibold text-ink-soft"
+                  >
+                    Kısa biyografi (opsiyonel — sadece sen görürsün)
+                  </label>
+                  <textarea
+                    id="bio"
+                    name="bio"
+                    rows={3}
+                    defaultValue={profile?.bio ?? ""}
+                    placeholder="Kendinle ilgili birkaç kelime…"
+                    className="w-full resize-y rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="self-start rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-brand-ink"
+                >
+                  Kaydet
+                </button>
+              </form>
+            </section>
 
             <section>
               <div className="mb-3 flex items-baseline justify-between">
