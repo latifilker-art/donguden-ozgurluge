@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
 import { Avatar } from "@/components/avatar";
+import { InstructorBadge } from "@/components/instructor-badge";
 import { createClient } from "@/lib/supabase/server";
 
 const SPECIALTIES = [
@@ -101,7 +102,10 @@ export default async function EgitmenlerPage({
                       className="font-display text-base"
                     />
                     <div>
-                      <div className="text-[14.5px] font-bold">{name}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[14.5px] font-bold">{name}</span>
+                        <InstructorBadge />
+                      </div>
                       <div className="text-[11.5px] text-ink-faint">
                         {inst.tagline}
                       </div>

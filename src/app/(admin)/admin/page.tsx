@@ -18,6 +18,11 @@ const SECTIONS = [
     desc: "Eğitmenlerin eklediği diploma/sertifikaları doğrula.",
   },
   {
+    href: "/admin/egitmenler",
+    title: "Eğitmen Yönetimi",
+    desc: "Eğitmenlerin verdiği eğitim/uygulamaları düzenle.",
+  },
+  {
     href: "/admin/etkinlikler",
     title: "Etkinlik Yönetimi",
     desc: "Online eğitim ve fiziki kamp oluştur, mevcutları listele.",

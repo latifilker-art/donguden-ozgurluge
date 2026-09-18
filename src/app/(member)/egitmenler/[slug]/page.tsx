@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AppBar } from "@/components/app-bar";
 import { Avatar } from "@/components/avatar";
+import { InstructorBadge } from "@/components/instructor-badge";
 import { BookingForm } from "@/components/booking-form";
 import { createClient } from "@/lib/supabase/server";
 import { requestAppointment } from "./actions";
@@ -75,7 +76,10 @@ export default async function EgitmenProfilPage({
             className="text-3xl"
           />
           <div>
-            <h1 className="font-display text-2xl">{name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display text-2xl">{name}</h1>
+              <InstructorBadge />
+            </div>
             <div className="mt-1 mb-3 text-sm text-ink-soft">{inst.tagline}</div>
             <div className="flex flex-wrap gap-1.5">
               {(inst.specialties ?? []).map((s: string) => (

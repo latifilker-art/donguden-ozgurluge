@@ -37,7 +37,7 @@ export default async function ProfilimPage() {
   // (member)/layout.tsx zaten girişsiz kullanıcıyı /giris'e yönlendiriyor.
   if (!user) return null;
 
-  const [profileRes, rhythmRes, worksRes, logRes, subRes] = await Promise.all([
+  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, bio, avatar_url, created_at")
@@ -58,12 +58,20 @@ export default async function ProfilimPage() {
       .select("plan, status, current_period_end")
       .eq("member_id", user.id)
       .maybeSingle(),
+    supabase
+      .from("color_analyses")
+      .select("id")
+      .eq("member_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const profile = profileRes.data;
   const rhythm = (rhythmRes.data ?? []) as RhythmEntry[];
   const works = (worksRes.data ?? []) as unknown as ExternalWork[];
   const accessLog = (logRes.data ?? []) as AccessLogEntry[];
+  const latestColorAnalysisId = colorAnalysisRes.data?.id as string | undefined;
   const tier = subRes.data?.plan ?? "temel";
   const tierMeta = TIER_LABEL[tier] ?? TIER_LABEL.temel;
 
@@ -259,7 +267,14 @@ export default async function ProfilimPage() {
                           {WORK_STATUS_LABEL[status]}
                         </div>
                       </div>
-                      {fileReady ? (
+                      {fileReady && work.title === "Renk Analizi" && latestColorAnalysisId ? (
+                        <Link
+                          href={`/renk-analizim/${latestColorAnalysisId}`}
+                          className="text-xs font-semibold text-brand hover:underline"
+                        >
+                          Dosyanı Gör
+                        </Link>
+                      ) : fileReady ? (
                         <span className="text-xs font-semibold text-brand">
                           Dosyanı Gör
                         </span>

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# renk analizi kaynak metinleri — gerçek müşteri verisi + özgün içerik içerir,
+# repoya değil private Supabase Storage'a konur (scripts/upload-color-analysis-source.mjs)
+src/lib/color-analysis/source/*.txt

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
 import { respondToAppointment } from "./actions";
@@ -34,14 +35,22 @@ export default async function EgitmenPaneliPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data } = await supabase
-    .from("appointments")
-    .select(
-      "id, session_type, requested_at, status, note, member:profiles(display_name)",
-    )
-    .eq("instructor_id", user.id)
-    .order("requested_at", { ascending: false });
+  const [{ data }, { data: instructor }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select(
+        "id, session_type, requested_at, status, note, member:profiles(display_name)",
+      )
+      .eq("instructor_id", user.id)
+      .order("requested_at", { ascending: false }),
+    supabase
+      .from("instructors")
+      .select("can_generate_color_analysis")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
+  const canGenerateColorAnalysis = instructor?.can_generate_color_analysis ?? false;
   const appointments = (data ?? []) as unknown as AppointmentRow[];
   const pending = appointments.filter((a) => a.status === "pending");
   const answered = appointments.filter((a) => a.status !== "pending");
@@ -53,7 +62,31 @@ export default async function EgitmenPaneliPage() {
         <p className="mb-2 font-mono text-[11px] tracking-wide text-brand uppercase">
           Eğitmen Paneli
         </p>
-        <h1 className="mb-6 font-display text-[25px]">Gelen Randevu Talepleri</h1>
+        <div className="mb-6 flex items-baseline justify-between">
+          <h1 className="font-display text-[25px]">Gelen Randevu Talepleri</h1>
+          <div className="flex gap-4">
+            <Link
+              href="/panel/programlar"
+              className="text-sm font-semibold text-brand hover:underline"
+            >
+              Verdiğim çalışmalar
+            </Link>
+            {canGenerateColorAnalysis && (
+              <Link
+                href="/panel/renk-analizi"
+                className="text-sm font-semibold text-brand hover:underline"
+              >
+                Renk analizi
+              </Link>
+            )}
+            <Link
+              href="/panel/profil"
+              className="text-sm font-semibold text-brand hover:underline"
+            >
+              Profilimi düzenle
+            </Link>
+          </div>
+        </div>
 
         <section className="mb-8">
           <h2 className="mb-3 font-display text-[17px]">

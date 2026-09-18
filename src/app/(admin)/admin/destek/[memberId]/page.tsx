@@ -113,7 +113,7 @@ export default async function DestekMemberPage({
   }
 
   // viewed=1 — erişim zaten loglandı, veriyi göster.
-  const [{ data: rhythm }, { data: works }, { data: appointments }] =
+  const [{ data: rhythm }, { data: works }, { data: appointments }, { data: colorAnalysis }] =
     await Promise.all([
       supabase
         .from("rhythm_entries")
@@ -131,7 +131,22 @@ export default async function DestekMemberPage({
         .eq("member_id", memberId)
         .order("requested_at", { ascending: false })
         .limit(5),
+      supabase
+        .from("color_analyses")
+        .select("id, full_name, created_at, pdf_path")
+        .eq("member_id", memberId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
+
+  let colorAnalysisPdfUrl: string | null = null;
+  if (colorAnalysis?.pdf_path) {
+    const { data: signed } = await supabase.storage
+      .from("work-results")
+      .createSignedUrl(colorAnalysis.pdf_path, 60 * 10);
+    colorAnalysisPdfUrl = signed?.signedUrl ?? null;
+  }
 
   return (
     <>
@@ -210,6 +225,30 @@ export default async function DestekMemberPage({
             )}
           </div>
         </section>
+
+        {colorAnalysis && (
+          <section className="mb-6">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="font-display text-[16px]">Renk Analizi Raporu</h2>
+              {colorAnalysisPdfUrl && (
+                <a
+                  href={colorAnalysisPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-brand hover:underline"
+                >
+                  PDF İndir ↗
+                </a>
+              )}
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-line bg-card p-4 text-sm shadow-sm">
+              <span className="font-semibold">{colorAnalysis.full_name}</span>
+              <span className="text-xs text-ink-faint">
+                {new Date(colorAnalysis.created_at).toLocaleDateString("tr-TR")}
+              </span>
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 font-display text-[16px]">Son Randevular</h2>

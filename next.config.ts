@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingIncludes: {
+    "/panel/renk-analizi": ["./src/lib/color-analysis/fonts/**"],
+  },
 };
 
 export default nextConfig;
