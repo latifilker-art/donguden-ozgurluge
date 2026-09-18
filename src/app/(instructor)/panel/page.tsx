@@ -45,12 +45,13 @@ export default async function EgitmenPaneliPage() {
       .order("requested_at", { ascending: false }),
     supabase
       .from("instructors")
-      .select("can_generate_color_analysis")
+      .select("can_generate_color_analysis, can_write_manual_results")
       .eq("id", user.id)
       .single(),
   ]);
 
   const canGenerateColorAnalysis = instructor?.can_generate_color_analysis ?? false;
+  const canWriteManualResults = instructor?.can_write_manual_results ?? false;
   const appointments = (data ?? []) as unknown as AppointmentRow[];
   const pending = appointments.filter((a) => a.status === "pending");
   const answered = appointments.filter((a) => a.status !== "pending");
@@ -77,6 +78,14 @@ export default async function EgitmenPaneliPage() {
                 className="text-sm font-semibold text-brand hover:underline"
               >
                 Renk analizi
+              </Link>
+            )}
+            {canWriteManualResults && (
+              <Link
+                href="/panel/manuel-sonuc"
+                className="text-sm font-semibold text-brand hover:underline"
+              >
+                Çalışma sonucu gir
               </Link>
             )}
             <Link

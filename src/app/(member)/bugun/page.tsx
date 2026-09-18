@@ -1,7 +1,13 @@
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
-import { toggleRhythmItem } from "./actions";
+import { toggleRhythmItem, saveEveningAnswer } from "./actions";
 import type { RhythmEntry, RhythmItem } from "@/lib/types";
+
+const EVENING_QUESTIONS = [
+  "Bugün seni en çok ne değiştirdi?",
+  "Bugün neyi bırakmaya hazırsın?",
+  "Yarın kendine nasıl bir söz veriyorsun?",
+] as const;
 
 const RHYTHM_META: Record<
   RhythmItem,
@@ -85,6 +91,57 @@ export default async function BugunPage() {
               !isDone &&
               !!entry.unlock_at &&
               new Date(entry.unlock_at) > new Date();
+
+            if (entry.item === "evening_questions") {
+              return (
+                <div
+                  key={entry.id}
+                  className="border-b border-line-soft px-4 py-3.5 last:border-b-0"
+                >
+                  <div className="mb-2 flex items-center gap-4">
+                    <div className="rounded-md bg-surface-2 px-2.5 py-1.5 text-center font-mono text-[10px] text-ink-faint">
+                      {meta.time}
+                    </div>
+                    <div>
+                      <div className="text-[13.5px] font-semibold">
+                        {meta.title}
+                      </div>
+                      <div className="mt-0.5 text-xs text-ink-soft">
+                        {isLocked
+                          ? `${formatIstanbulTime(entry.unlock_at!)}'de açılır`
+                          : meta.desc}
+                      </div>
+                    </div>
+                  </div>
+                  {!isLocked && (
+                    <form
+                      action={saveEveningAnswer.bind(null, entry.id)}
+                      className="flex flex-col gap-2 pl-[76px]"
+                    >
+                      <ul className="mb-1 list-disc pl-4 text-xs text-ink-soft">
+                        {EVENING_QUESTIONS.map((q) => (
+                          <li key={q}>{q}</li>
+                        ))}
+                      </ul>
+                      <textarea
+                        name="answerText"
+                        rows={4}
+                        required
+                        defaultValue={entry.answer_text ?? ""}
+                        placeholder="Bugünü kapatan düşüncelerini yaz…"
+                        className="w-full resize-y rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                      />
+                      <button
+                        type="submit"
+                        className="self-start rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-brand-ink"
+                      >
+                        {isDone ? "Güncelle" : "Kaydet"}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              );
+            }
 
             return (
               <div

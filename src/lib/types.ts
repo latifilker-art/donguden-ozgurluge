@@ -14,6 +14,7 @@ export type RhythmEntry = {
   item: RhythmItem;
   unlock_at: string | null;
   completed_at: string | null;
+  answer_text: string | null;
 };
 
 export type WorkStatus = "not_started" | "in_progress" | "completed";
@@ -23,7 +24,11 @@ export type ExternalWork = {
   title: string;
   description: string | null;
   sort_order: number;
-  member_work_progress: { status: WorkStatus; result_file_path: string | null }[];
+  member_work_progress: {
+    status: WorkStatus;
+    result_file_path: string | null;
+    result_text: string | null;
+  }[];
 };
 
 export type AccessLogEntry = {

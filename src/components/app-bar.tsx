@@ -7,6 +7,7 @@ const TABS = [
   { href: "/programlar", label: "Programlar" },
   { href: "/egitmenler", label: "Eğitmenler" },
   { href: "/duyurular", label: "Duyurular" },
+  { href: "/frekans", label: "Frekans" },
   { href: "/fotograflar", label: "Fotoğraflar" },
   { href: "/profilim", label: "Profilim" },
 ] as const;

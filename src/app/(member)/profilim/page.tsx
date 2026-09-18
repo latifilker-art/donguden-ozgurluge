@@ -37,16 +37,20 @@ export default async function ProfilimPage() {
   // (member)/layout.tsx zaten girişsiz kullanıcıyı /giris'e yönlendiriyor.
   if (!user) return null;
 
-  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes] = await Promise.all([
+  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes, eveningHistoryRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name, bio, avatar_url, created_at")
+      .select(
+        "display_name, bio, avatar_url, created_at, phone, birth_date, address, emergency_contact",
+      )
       .eq("id", user.id)
       .single(),
     supabase.rpc("get_or_create_today_rhythm", { p_member_id: user.id }),
     supabase
       .from("external_works")
-      .select("id, title, description, sort_order, member_work_progress(status, result_file_path)")
+      .select(
+        "id, title, description, sort_order, member_work_progress(status, result_file_path, result_text)",
+      )
       .order("sort_order"),
     supabase
       .from("access_log")
@@ -65,6 +69,14 @@ export default async function ProfilimPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("rhythm_entries")
+      .select("id, entry_date, answer_text")
+      .eq("member_id", user.id)
+      .eq("item", "evening_questions")
+      .not("answer_text", "is", null)
+      .order("entry_date", { ascending: false })
+      .limit(10),
   ]);
 
   const profile = profileRes.data;
@@ -72,6 +84,11 @@ export default async function ProfilimPage() {
   const works = (worksRes.data ?? []) as unknown as ExternalWork[];
   const accessLog = (logRes.data ?? []) as AccessLogEntry[];
   const latestColorAnalysisId = colorAnalysisRes.data?.id as string | undefined;
+  const eveningHistory = (eveningHistoryRes.data ?? []) as {
+    id: string;
+    entry_date: string;
+    answer_text: string;
+  }[];
   const tier = subRes.data?.plan ?? "temel";
   const tierMeta = TIER_LABEL[tier] ?? TIER_LABEL.temel;
 
@@ -232,6 +249,70 @@ export default async function ProfilimPage() {
                     className="w-full resize-y rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="mb-1.5 block text-xs font-semibold text-ink-soft"
+                    >
+                      Telefon (opsiyonel)
+                    </label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      defaultValue={profile?.phone ?? ""}
+                      placeholder="05xx xxx xx xx"
+                      className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="birthDate"
+                      className="mb-1.5 block text-xs font-semibold text-ink-soft"
+                    >
+                      Doğum Tarihi (opsiyonel)
+                    </label>
+                    <input
+                      id="birthDate"
+                      name="birthDate"
+                      type="date"
+                      defaultValue={profile?.birth_date ?? ""}
+                      className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="address"
+                    className="mb-1.5 block text-xs font-semibold text-ink-soft"
+                  >
+                    Adres (opsiyonel)
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    rows={2}
+                    defaultValue={profile?.address ?? ""}
+                    placeholder="Kamp/kargo gibi organizasyonlar için"
+                    className="w-full resize-y rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="emergencyContact"
+                    className="mb-1.5 block text-xs font-semibold text-ink-soft"
+                  >
+                    Acil Durum İletişim Kişisi (opsiyonel)
+                  </label>
+                  <input
+                    id="emergencyContact"
+                    name="emergencyContact"
+                    defaultValue={profile?.emergency_contact ?? ""}
+                    placeholder="Ad Soyad — telefon"
+                    className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  />
+                </div>
                 <button
                   type="submit"
                   className="self-start rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-brand-ink"
@@ -253,41 +334,81 @@ export default async function ProfilimPage() {
                 {works.map((work, i) => {
                   const status = work.member_work_progress[0]?.status ?? "not_started";
                   const fileReady = status === "completed" && work.member_work_progress[0]?.result_file_path;
+                  const resultText = work.member_work_progress[0]?.result_text;
                   return (
                     <div
                       key={work.id}
-                      className="grid grid-cols-[34px_1fr_auto] items-center gap-4 border-b border-line-soft px-4 py-3.5 last:border-b-0"
+                      className="border-b border-line-soft px-4 py-3.5 last:border-b-0"
                     >
-                      <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand-soft font-mono text-xs font-semibold text-brand">
-                        {String(i + 1).padStart(2, "0")}
-                      </div>
-                      <div>
-                        <div className="text-[13.5px] font-semibold">{work.title}</div>
-                        <div className="mt-0.5 text-[11.5px] text-ink-faint">
-                          {WORK_STATUS_LABEL[status]}
+                      <div className="grid grid-cols-[34px_1fr_auto] items-center gap-4">
+                        <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand-soft font-mono text-xs font-semibold text-brand">
+                          {String(i + 1).padStart(2, "0")}
                         </div>
+                        <div>
+                          <div className="text-[13.5px] font-semibold">{work.title}</div>
+                          <div className="mt-0.5 text-[11.5px] text-ink-faint">
+                            {WORK_STATUS_LABEL[status]}
+                          </div>
+                        </div>
+                        {fileReady && work.title === "Renk Analizi" && latestColorAnalysisId ? (
+                          <Link
+                            href={`/renk-analizim/${latestColorAnalysisId}`}
+                            className="text-xs font-semibold text-brand hover:underline"
+                          >
+                            Dosyanı Gör
+                          </Link>
+                        ) : fileReady ? (
+                          <span className="text-xs font-semibold text-brand">
+                            Dosyanı Gör
+                          </span>
+                        ) : resultText ? (
+                          <span className="text-xs font-semibold text-brand">
+                            Sonuç hazır ↓
+                          </span>
+                        ) : (
+                          <span className="text-xs text-ink-faint">
+                            Eğitmenin işaretlemesini bekliyor
+                          </span>
+                        )}
                       </div>
-                      {fileReady && work.title === "Renk Analizi" && latestColorAnalysisId ? (
-                        <Link
-                          href={`/renk-analizim/${latestColorAnalysisId}`}
-                          className="text-xs font-semibold text-brand hover:underline"
-                        >
-                          Dosyanı Gör
-                        </Link>
-                      ) : fileReady ? (
-                        <span className="text-xs font-semibold text-brand">
-                          Dosyanı Gör
-                        </span>
-                      ) : (
-                        <span className="text-xs text-ink-faint">
-                          Eğitmenin işaretlemesini bekliyor
-                        </span>
+                      {resultText && (
+                        <details className="mt-2.5 ml-[50px]">
+                          <summary className="cursor-pointer text-xs font-semibold text-brand">
+                            Sonucu Gör
+                          </summary>
+                          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-soft">
+                            {resultText}
+                          </p>
+                        </details>
                       )}
                     </div>
                   );
                 })}
               </div>
             </section>
+
+            {eveningHistory.length > 0 && (
+              <section>
+                <h2 className="mb-3 font-display text-[17px]">
+                  Dönüştürücü Sorular Geçmişi
+                </h2>
+                <div className="flex flex-col gap-3">
+                  {eveningHistory.map((e) => (
+                    <details
+                      key={e.id}
+                      className="rounded-xl border border-line bg-card p-4 shadow-sm"
+                    >
+                      <summary className="cursor-pointer text-sm font-semibold text-ink">
+                        {formatDate(e.entry_date)}
+                      </summary>
+                      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-soft">
+                        {e.answer_text}
+                      </p>
+                    </details>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section>
               <div className="mb-3 flex items-baseline justify-between">

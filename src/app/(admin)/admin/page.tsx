@@ -37,6 +37,11 @@ const SECTIONS = [
     title: "Fotoğraf Galerisi",
     desc: "Etkinlik ve kamp fotoğrafları yükle, herkese açık galeriyi yönet.",
   },
+  {
+    href: "/admin/ses-kutuphanesi",
+    title: "Ses Kütüphanesi",
+    desc: "Çakra dengeleme ve olumlama sesleri yükle — Premium/VIP'e özel.",
+  },
 ];
 
 export default function AdminPage() {

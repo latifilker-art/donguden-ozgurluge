@@ -54,11 +54,22 @@ export async function updateProfile(formData: FormData): Promise<void> {
 
   const displayName = String(formData.get("displayName") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const birthDate = String(formData.get("birthDate") ?? "").trim();
+  const address = String(formData.get("address") ?? "").trim();
+  const emergencyContact = String(formData.get("emergencyContact") ?? "").trim();
   if (!displayName) return;
 
   const { error } = await supabase
     .from("profiles")
-    .update({ display_name: displayName, bio: bio || null })
+    .update({
+      display_name: displayName,
+      bio: bio || null,
+      phone: phone || null,
+      birth_date: birthDate || null,
+      address: address || null,
+      emergency_contact: emergencyContact || null,
+    })
     .eq("id", user.id);
 
   if (error) {

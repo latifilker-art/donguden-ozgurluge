@@ -113,8 +113,13 @@ export default async function DestekMemberPage({
   }
 
   // viewed=1 — erişim zaten loglandı, veriyi göster.
-  const [{ data: rhythm }, { data: works }, { data: appointments }, { data: colorAnalysis }] =
+  const [{ data: details }, { data: rhythm }, { data: works }, { data: appointments }, { data: colorAnalysis }] =
     await Promise.all([
+      supabase
+        .from("profiles")
+        .select("phone, birth_date, address, emergency_contact")
+        .eq("id", memberId)
+        .single(),
       supabase
         .from("rhythm_entries")
         .select("item, completed_at")
@@ -164,6 +169,40 @@ export default async function DestekMemberPage({
         <h1 className="mb-6 font-display text-[22px]">
           {profile.display_name}
         </h1>
+
+        {details && (details.phone || details.birth_date || details.address || details.emergency_contact) && (
+          <section className="mb-6">
+            <h2 className="mb-3 font-display text-[16px]">
+              İletişim &amp; Kişisel Bilgiler
+            </h2>
+            <div className="rounded-xl border border-line bg-card p-4 text-sm shadow-sm">
+              {details.phone && (
+                <div className="border-b border-line-soft py-2 first:pt-0 last:border-b-0 last:pb-0">
+                  <span className="text-ink-faint">Telefon: </span>
+                  {details.phone}
+                </div>
+              )}
+              {details.birth_date && (
+                <div className="border-b border-line-soft py-2 first:pt-0 last:border-b-0 last:pb-0">
+                  <span className="text-ink-faint">Doğum Tarihi: </span>
+                  {new Date(details.birth_date).toLocaleDateString("tr-TR")}
+                </div>
+              )}
+              {details.address && (
+                <div className="border-b border-line-soft py-2 first:pt-0 last:border-b-0 last:pb-0">
+                  <span className="text-ink-faint">Adres: </span>
+                  {details.address}
+                </div>
+              )}
+              {details.emergency_contact && (
+                <div className="py-2 first:pt-0 last:pb-0">
+                  <span className="text-ink-faint">Acil Durum Kişisi: </span>
+                  {details.emergency_contact}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="mb-6">
           <h2 className="mb-3 font-display text-[16px]">
