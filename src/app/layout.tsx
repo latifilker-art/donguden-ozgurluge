@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Karla, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -18,8 +18,15 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#3f6f5e",
+};
+
 export const metadata: Metadata = {
   title: "Döngüden Özgürlüğe",
+  applicationName: "Döngüden Özgürlüğe",
+  appleWebApp: { capable: true, title: "Döngüden Özgürlüğe", statusBarStyle: "default" },
+  icons: { apple: "/pwa-icon/180" },
   description:
     "Kişiye özel günlük pratik, nefes çalışmaları ve eğitmen rehberliği sunan farkındalık üyeliği.",
 };
