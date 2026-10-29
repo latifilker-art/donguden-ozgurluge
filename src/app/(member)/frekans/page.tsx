@@ -1,21 +1,12 @@
-import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
+import { CHAKRAS } from "@/lib/chakras";
 
-const CATEGORY_META: Record<string, { title: string; desc: string }> = {
-  cakra_dengeleme: {
-    title: "Çakra Dengeleme",
-    desc: "Enerji merkezlerini dengelemek için ses çalışmaları",
-  },
-  olumlama: {
-    title: "Olumlama",
-    desc: "Günlük pratiğini destekleyen olumlama sesleri",
-  },
-};
 
 type TrackRow = {
   id: string;
   category: string;
+  chakra: string | null;
   title: string;
   description: string | null;
   storage_path: string;
@@ -23,115 +14,77 @@ type TrackRow = {
 
 export default async function FrekansPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("plan, status")
-    .eq("member_id", user.id)
-    .maybeSingle();
-
-  const hasAccess =
-    sub?.status === "active" && (sub?.plan === "premium" || sub?.plan === "vip");
-
-  if (!hasAccess) {
-    return (
-      <>
-        <AppBar active="/frekans" />
-        <div className="mx-auto max-w-md px-7 py-8">
-          <p className="mb-2 font-mono text-[11px] tracking-wide text-brand uppercase">
-            Frekans
-          </p>
-          <h1 className="mb-3 font-display text-[22px]">Ses Kütüphanesi</h1>
-          <div className="rounded-xl border border-line bg-card p-5 text-sm shadow-sm">
-            <p className="mb-3 text-ink-soft">
-              Çakra dengeleme ve olumlama sesleri Premium ve VIP üyelere özeldir.
-            </p>
-            <Link
-              href="/profilim"
-              className="font-semibold text-brand hover:underline"
-            >
-              Üyelik durumunu profilimde gör →
-            </Link>
-          </div>
-        </div>
-      </>
-    );
-  }
 
   const { data: tracks } = await supabase
     .from("audio_tracks")
-    .select("id, category, title, description, storage_path")
-    .order("category")
-    .order("sort_order");
+    .select("id, category, chakra, title, description, storage_path")
+    .order("sort_order")
+    .order("title");
 
-  const trackList = (tracks ?? []) as TrackRow[];
-
-  const tracksWithUrls = await Promise.all(
-    trackList.map(async (t) => {
-      const { data: signed } = await supabase.storage
+  const withUrls = await Promise.all(
+    ((tracks ?? []) as TrackRow[]).map(async (t) => {
+      const { data } = await supabase.storage
         .from("audio-library")
-        .createSignedUrl(t.storage_path, 60 * 30);
-      return { ...t, url: signed?.signedUrl ?? null };
+        .createSignedUrl(t.storage_path, 60 * 60);
+      return { ...t, url: data?.signedUrl ?? null };
     }),
   );
 
-  const grouped = tracksWithUrls.reduce<Record<string, typeof tracksWithUrls>>(
-    (acc, t) => {
-      (acc[t.category] ??= []).push(t);
-      return acc;
-    },
-    {},
+  const chakraTracks = (key: string) => withUrls.filter((t) => t.chakra === key);
+  const affirmations = withUrls.filter((t) => t.category === "olumlama");
+  const others = withUrls.filter(
+    (t) => t.category === "cakra_dengeleme" && !CHAKRAS.some((c) => c.key === t.chakra),
   );
 
   return (
     <>
       <AppBar active="/frekans" />
-      <div className="mx-auto max-w-2xl px-7 py-8">
-        <p className="mb-2 font-mono text-[11px] tracking-wide text-brand uppercase">
-          Frekans
+      <div className="mx-auto max-w-3xl px-7 py-8">
+        <p className="mb-2 font-mono text-[11px] tracking-wide text-brand uppercase">Frekans</p>
+        <h1 className="mb-2 font-display text-[27px]">Ses Kütüphanesi</h1>
+        <p className="mb-8 max-w-[60ch] text-sm text-ink-soft">
+          Çakra dengeleme frekansları ve olumlama sesleri. Kulaklıkla, sessiz bir ortamda,
+          gözlerin kapalı dinlemeni öneririz.
         </p>
-        <h1 className="mb-6 font-display text-[25px]">Ses Kütüphanesi</h1>
 
-        {Object.entries(CATEGORY_META).map(([category, meta]) => {
-          const items = grouped[category] ?? [];
-          if (items.length === 0) return null;
-          return (
-            <section key={category} className="mb-8">
-              <h2 className="mb-1 font-display text-[17px]">{meta.title}</h2>
-              <p className="mb-3 text-xs text-ink-faint">{meta.desc}</p>
-              <div className="flex flex-col gap-3">
-                {items.map((t) => (
-                  <div
-                    key={t.id}
-                    className="rounded-xl border border-line bg-card p-4 shadow-sm"
-                  >
-                    <div className="mb-2">
-                      <div className="text-sm font-semibold">{t.title}</div>
-                      {t.description && (
-                        <div className="text-xs text-ink-faint">
-                          {t.description}
-                        </div>
-                      )}
-                    </div>
-                    {t.url ? (
-                      <audio controls preload="none" className="w-full" src={t.url} />
-                    ) : (
-                      <p className="text-xs text-neg">Ses dosyası yüklenemedi.</p>
-                    )}
+        <div className="mb-10 grid gap-4 sm:grid-cols-2">
+          {CHAKRAS.map((c) => {
+            const items = chakraTracks(c.key);
+            return (
+              <div key={c.key} className="overflow-hidden rounded-2xl border border-line bg-card shadow-sm">
+                <div className="flex items-center gap-3 px-4 py-3" style={{ background: `${c.color}1f` }}>
+                  <div className="h-9 w-9 rounded-full ring-2 ring-white" style={{ background: c.color }} />
+                  <div>
+                    <div className="text-sm font-bold">{c.name}</div>
+                    <div className="font-mono text-[10px] text-ink-soft">{c.hz} Hz · {c.desc}</div>
                   </div>
-                ))}
+                </div>
+                <div className="flex flex-col gap-3 p-4">
+                  {items.map((t) => (
+                    <div key={t.id}>
+                      <div className="mb-1 text-xs font-semibold">{t.title}</div>
+                      {t.url && <audio controls preload="none" className="w-full" src={t.url} />}
+                    </div>
+                  ))}
+                  {items.length === 0 && <p className="text-xs text-ink-faint">Yakında eklenecek.</p>}
+                </div>
               </div>
-            </section>
-          );
-        })}
+            );
+          })}
+        </div>
 
-        {tracksWithUrls.length === 0 && (
-          <p className="text-sm text-ink-faint">Henüz ses eklenmedi.</p>
-        )}
+        <h2 className="mb-1 font-display text-[19px]">Olumlama Frekansları</h2>
+        <p className="mb-4 text-xs text-ink-faint">Olumlama sesleri ve destekleyici frekanslar</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[...affirmations, ...others].map((t) => (
+            <div key={t.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
+              <div className="text-sm font-semibold">{t.title}</div>
+              {t.description && <div className="mb-2 text-xs text-ink-faint">{t.description}</div>}
+              {t.url && <audio controls preload="none" className="mt-1 w-full" src={t.url} />}
+            </div>
+          ))}
+          {affirmations.length === 0 && <p className="text-sm text-ink-faint">Yakında eklenecek.</p>}
+        </div>
       </div>
     </>
   );

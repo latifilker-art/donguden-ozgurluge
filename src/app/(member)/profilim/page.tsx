@@ -3,6 +3,9 @@ import { AppBar } from "@/components/app-bar";
 import { Avatar } from "@/components/avatar";
 import { AvatarUploadInput } from "@/components/avatar-upload-input";
 import { createClient } from "@/lib/supabase/server";
+import { ColorProfileCard, DailyPlanCard } from "@/components/color-profile";
+import { requestColorAnalysis } from "./actions";
+import type { ColorAnalysisComputation } from "@/lib/color-analysis/numerology";
 import { signOut } from "@/lib/auth/actions";
 import { uploadAvatar, updateProfile } from "./actions";
 import type { AccessLogEntry, ExternalWork, RhythmEntry } from "@/lib/types";
@@ -37,7 +40,7 @@ export default async function ProfilimPage() {
   // (member)/layout.tsx zaten girişsiz kullanıcıyı /giris'e yönlendiriyor.
   if (!user) return null;
 
-  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes, eveningHistoryRes] = await Promise.all([
+  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes, eveningHistoryRes, requestRes] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -64,7 +67,7 @@ export default async function ProfilimPage() {
       .maybeSingle(),
     supabase
       .from("color_analyses")
-      .select("id")
+      .select("id, computation")
       .eq("member_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -77,13 +80,32 @@ export default async function ProfilimPage() {
       .not("answer_text", "is", null)
       .order("entry_date", { ascending: false })
       .limit(10),
+    supabase
+      .from("color_analysis_requests")
+      .select("status, created_at")
+      .eq("member_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const profile = profileRes.data;
   const rhythm = (rhythmRes.data ?? []) as RhythmEntry[];
   const works = (worksRes.data ?? []) as unknown as ExternalWork[];
   const accessLog = (logRes.data ?? []) as AccessLogEntry[];
+  const fileUrls: Record<string, string> = {};
+  for (const w of works) {
+    const path = w.member_work_progress[0]?.result_file_path;
+    if (path && w.title !== "Renk Analizi") {
+      const { data: signed } = await supabase.storage
+        .from("work-results")
+        .createSignedUrl(path, 60 * 30);
+      if (signed?.signedUrl) fileUrls[w.id] = signed.signedUrl;
+    }
+  }
   const latestColorAnalysisId = colorAnalysisRes.data?.id as string | undefined;
+  const colorComputation = colorAnalysisRes.data?.computation as ColorAnalysisComputation | undefined;
+  const lastRequest = requestRes.data as { status: string } | null;
   const eveningHistory = (eveningHistoryRes.data ?? []) as {
     id: string;
     entry_date: string;
@@ -211,6 +233,34 @@ export default async function ProfilimPage() {
                 {completedToday} / 4
               </span>
             </Link>
+
+            {colorComputation ? (
+              <>
+                <ColorProfileCard computation={colorComputation} />
+                <DailyPlanCard computation={colorComputation} />
+              </>
+            ) : (
+              <div className="rounded-2xl border border-line bg-card p-5 shadow-sm">
+                <h2 className="mb-1 font-display text-[17px]">Renk Analizi</h2>
+                {lastRequest?.status === "pending" ? (
+                  <p className="text-sm text-ink-soft">
+                    Talebin alındı — Renk Analisti onayladığında raporun ve sana özel günlük planın burada görünecek.
+                  </p>
+                ) : (
+                  <form action={requestColorAnalysis} className="flex flex-col gap-3">
+                    <p className="text-sm text-ink-soft">
+                      İsmin ve doğum tarihinle kişisel renk analizi talep et. Onay sonrası sana özel olumlama ve günlük plan oluşur.
+                    </p>
+                    {lastRequest?.status === "rejected" && (
+                      <p className="text-xs text-neg">Önceki talebin onaylanmadı, bilgilerini kontrol edip tekrar gönderebilirsin.</p>
+                    )}
+                    <input name="fullName" required defaultValue={displayName} placeholder="Ad Soyad (kimlikteki gibi)" className="rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm" />
+                    <input name="birthDate" type="date" required defaultValue={profile?.birth_date ?? ""} className="rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm" />
+                    <button type="submit" className="self-start rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-brand-ink">Analiz Talep Et</button>
+                  </form>
+                )}
+              </div>
+            )}
 
             <section>
               <h2 className="mb-3 font-display text-[17px]">Hakkımda</h2>
@@ -358,9 +408,14 @@ export default async function ProfilimPage() {
                             Dosyanı Gör
                           </Link>
                         ) : fileReady ? (
-                          <span className="text-xs font-semibold text-brand">
-                            Dosyanı Gör
-                          </span>
+                          <a
+                            href={fileUrls[work.id] ?? "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-brand hover:underline"
+                          >
+                            PDF&apos;i Aç ↗
+                          </a>
                         ) : resultText ? (
                           <span className="text-xs font-semibold text-brand">
                             Sonuç hazır ↓

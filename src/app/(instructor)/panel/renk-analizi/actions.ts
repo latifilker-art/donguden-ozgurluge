@@ -65,6 +65,24 @@ export async function createColorAnalysis(formData: FormData): Promise<void> {
     redirect("/panel/renk-analizi?error=save");
   }
 
+  const requestId = String(formData.get("requestId") ?? "");
+  if (requestId) {
+    await supabase
+      .from("color_analysis_requests")
+      .update({ status: "approved", analysis_id: analysisId })
+      .eq("id", requestId);
+  }
+
   revalidatePath("/panel/renk-analizi");
+  revalidatePath("/profilim");
   redirect(`/panel/renk-analizi/${analysisId}`);
+}
+
+export async function rejectColorRequest(requestId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("color_analysis_requests")
+    .update({ status: "rejected" })
+    .eq("id", requestId);
+  revalidatePath("/panel/renk-analizi");
 }

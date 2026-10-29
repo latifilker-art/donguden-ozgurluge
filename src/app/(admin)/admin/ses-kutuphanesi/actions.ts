@@ -11,6 +11,7 @@ export async function uploadAudioTrack(formData: FormData): Promise<void> {
 
   const category = String(formData.get("category") ?? "");
   const title = String(formData.get("title") ?? "").trim();
+  const chakra = String(formData.get("chakra") ?? "") || null;
   const description = String(formData.get("description") ?? "").trim();
   if (!title || (category !== "cakra_dengeleme" && category !== "olumlama")) return;
 
@@ -28,6 +29,7 @@ export async function uploadAudioTrack(formData: FormData): Promise<void> {
 
   const { error: insertError } = await supabase.from("audio_tracks").insert({
     category,
+    chakra,
     title,
     description: description || null,
     storage_path: path,

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
-import { createColorAnalysis } from "./actions";
+import { createColorAnalysis, rejectColorRequest } from "./actions";
 
 export const maxDuration = 800;
 
@@ -34,7 +34,7 @@ export default async function RenkAnaliziPage({
     .single();
   if (!instructor?.can_generate_color_analysis) notFound();
 
-  const [{ data: memberData }, { data: analysisData }] = await Promise.all([
+  const [{ data: memberData }, { data: analysisData }, { data: requestData }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, display_name")
@@ -46,7 +46,15 @@ export default async function RenkAnaliziPage({
       .select("id, full_name, created_at")
       .eq("instructor_id", user.id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("color_analysis_requests")
+      .select("id, member_id, full_name, birth_date, created_at")
+      .eq("status", "pending")
+      .order("created_at"),
   ]);
+  const requests = (requestData ?? []) as {
+    id: string; member_id: string; full_name: string; birth_date: string; created_at: string;
+  }[];
 
   const members = (memberData ?? []) as MemberOption[];
   const analyses = (analysisData ?? []) as AnalysisRow[];
@@ -70,6 +78,45 @@ export default async function RenkAnaliziPage({
             {ERROR_MESSAGES[error] ?? "Bir hata oluştu — tekrar dene."}
           </div>
         )}
+
+        <section className="mb-8">
+          <h2 className="mb-3 font-display text-[16px]">
+            Bekleyen Üye Talepleri{" "}
+            <span className="font-mono text-sm text-ink-faint">({requests.length})</span>
+          </h2>
+          <div className="flex flex-col gap-3">
+            {requests.map((r) => (
+              <div key={r.id} className="rounded-xl border border-line bg-card p-4 shadow-sm">
+                <div className="mb-3">
+                  <div className="text-sm font-bold">{r.full_name}</div>
+                  <div className="text-xs text-ink-faint">
+                    Doğum: {new Date(r.birth_date).toLocaleDateString("tr-TR")} · talep:{" "}
+                    {new Date(r.created_at).toLocaleDateString("tr-TR")}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <form action={createColorAnalysis}>
+                    <input type="hidden" name="requestId" value={r.id} />
+                    <input type="hidden" name="memberId" value={r.member_id} />
+                    <input type="hidden" name="fullName" value={r.full_name} />
+                    <input type="hidden" name="birthDate" value={r.birth_date} />
+                    <button type="submit" className="rounded-lg bg-brand px-3.5 py-2 text-xs font-semibold text-brand-ink">
+                      Onayla ve Analizi Oluştur
+                    </button>
+                  </form>
+                  <form action={rejectColorRequest.bind(null, r.id)}>
+                    <button type="submit" className="rounded-lg border border-line px-3.5 py-2 text-xs font-semibold text-ink-soft hover:border-neg hover:text-neg">
+                      Reddet
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+            {requests.length === 0 && (
+              <p className="rounded-xl border border-line bg-card p-4 text-sm text-ink-faint">Bekleyen talep yok.</p>
+            )}
+          </div>
+        </section>
 
         <form
           action={createColorAnalysis}

@@ -79,3 +79,36 @@ export async function updateProfile(formData: FormData): Promise<void> {
 
   revalidatePath("/profilim");
 }
+
+export async function requestColorAnalysis(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const birthDate = String(formData.get("birthDate") ?? "").trim();
+  if (!fullName || !birthDate) return;
+
+  const { data: existing } = await supabase
+    .from("color_analysis_requests")
+    .select("id")
+    .eq("member_id", user.id)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (existing) return;
+
+  const { error } = await supabase.from("color_analysis_requests").insert({
+    member_id: user.id,
+    full_name: fullName,
+    birth_date: birthDate,
+  });
+  if (error) {
+    console.error("requestColorAnalysis failed:", error.message);
+    return;
+  }
+
+  await supabase.from("profiles").update({ birth_date: birthDate }).eq("id", user.id);
+  revalidatePath("/profilim");
+}

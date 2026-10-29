@@ -1,5 +1,6 @@
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
+import { CHAKRAS } from "@/lib/chakras";
 import { uploadAudioTrack, deleteAudioTrack } from "./actions";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -68,6 +69,17 @@ export default async function AdminSesKutuphanesiPage() {
               >
                 <option value="cakra_dengeleme">Çakra Dengeleme</option>
                 <option value="olumlama">Olumlama</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-ink-soft">
+                Çakra (çakra dengeleme için)
+              </label>
+              <select name="chakra" className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm">
+                <option value="">— Yok —</option>
+                {CHAKRAS.map((c) => (
+                  <option key={c.key} value={c.key}>{c.name} ({c.hz} Hz)</option>
+                ))}
               </select>
             </div>
             <div>

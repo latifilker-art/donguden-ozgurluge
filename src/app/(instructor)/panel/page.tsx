@@ -97,6 +97,20 @@ export default async function EgitmenPaneliPage() {
           </div>
         </div>
 
+        <div className="mb-8 grid grid-cols-3 gap-3">
+          {[
+            { label: "Bekleyen", value: pending.length, tone: "#b8903a" },
+            { label: "Onaylanan", value: appointments.filter((a) => a.status === "approved").length, tone: "#3f6f5e" },
+            { label: "Toplam Talep", value: appointments.length, tone: "#3f7fb5" },
+          ].map((c) => (
+            <div key={c.label} className="relative overflow-hidden rounded-2xl border border-line bg-card p-4 shadow-sm">
+              <div className="absolute inset-x-0 top-0 h-1" style={{ background: c.tone }} />
+              <div className="font-display text-[28px] leading-none" style={{ color: c.tone }}>{c.value}</div>
+              <div className="mt-2 text-xs text-ink-soft">{c.label}</div>
+            </div>
+          ))}
+        </div>
+
         <section className="mb-8">
           <h2 className="mb-3 font-display text-[17px]">
             Bekliyor{" "}
