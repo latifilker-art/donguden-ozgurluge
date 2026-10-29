@@ -62,15 +62,19 @@ export async function updateProfile(formData: FormData): Promise<void> {
 
   const { error } = await supabase
     .from("profiles")
-    .update({
-      display_name: displayName,
+    .update({ display_name: displayName })
+    .eq("id", user.id);
+  if (!error) {
+    const { error: privError } = await supabase.from("profile_private").upsert({
+      id: user.id,
       bio: bio || null,
       phone: phone || null,
       birth_date: birthDate || null,
       address: address || null,
       emergency_contact: emergencyContact || null,
-    })
-    .eq("id", user.id);
+    });
+    if (privError) console.error("profile_private upsert failed:", privError.message);
+  }
 
   if (error) {
     console.error("updateProfile failed:", error.message);
@@ -109,7 +113,7 @@ export async function requestColorAnalysis(formData: FormData): Promise<void> {
     return;
   }
 
-  await supabase.from("profiles").update({ birth_date: birthDate }).eq("id", user.id);
+  await supabase.from("profile_private").upsert({ id: user.id, birth_date: birthDate });
   revalidatePath("/profilim");
 }
 

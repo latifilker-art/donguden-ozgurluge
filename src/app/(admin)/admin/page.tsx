@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 const SECTIONS = [
   { href: "/admin/talepler", title: "Üye Talepleri", desc: "Renk analizi ve Kalbin Rehberliği talepleri", tone: "#b8566b" },
   { href: "/admin/uyeler", title: "Üye Onayı", desc: "Yeni kayıtları onayla veya reddet", tone: "#c0603f" },
-  { href: "/admin/uyelikler", title: "Üyelik Kademeleri", desc: "Temel / Premium / VIP geçişleri", tone: "#b8903a" },
+  { href: "/admin/uyelikler", title: "Üye Seviyeleri", desc: "Başlangıç / Temel / İleri seviyeler", tone: "#b8903a" },
   { href: "/admin/destek", title: "Destek Görünümü", desc: "Üye profili, dosya ve PDF ekleme (loglu)", tone: "#3f7fb5" },
   { href: "/admin/egitmenler", title: "Eğitmenler", desc: "Verdikleri çalışmaları düzenle", tone: "#8a5aa8" },
   { href: "/admin/diplomalar", title: "Diploma Onayı", desc: "Sertifikaları doğrula", tone: "#4f8a5b" },
@@ -31,7 +31,7 @@ export default async function AdminPage() {
     await Promise.all([
       count(supabase, "profiles", (q) => q.eq("role", "member").eq("status", "approved")),
       count(supabase, "profiles", (q) => q.eq("role", "member").eq("status", "pending")),
-      count(supabase, "subscriptions", (q) => q.in("plan", ["premium", "vip"]).eq("status", "active")),
+      count(supabase, "profiles", (q) => q.eq("role", "instructor")),
       count(supabase, "color_analysis_requests", (q) => q.eq("status", "pending")),
       count(supabase, "appointments", (q) => q.eq("status", "pending")),
       count(supabase, "audio_tracks"),
@@ -43,7 +43,7 @@ export default async function AdminPage() {
   const STATS = [
     { label: "Aktif Üye", value: members, tone: "#3f6f5e", href: "/admin/uyeler" },
     { label: "Onay Bekleyen", value: pending, tone: "#c0603f", href: "/admin/uyeler", alert: pending > 0 },
-    { label: "Premium / VIP", value: premium, tone: "#b8903a", href: "/admin/uyelikler" },
+    { label: "Eğitmen", value: premium, tone: "#b8903a", href: "/admin/egitmenler" },
     { label: "Bekleyen Talepler", value: requests + workReqs, tone: "#8a5aa8", href: "/admin/talepler", alert: requests + workReqs > 0 },
     { label: "Bekleyen Randevu", value: appts, tone: "#3f7fb5", href: "/admin/destek" },
     { label: "Üretilen Analiz", value: analyses, tone: "#4f8a5b", href: "/admin/destek" },

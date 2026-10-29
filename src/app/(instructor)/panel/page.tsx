@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
-import { respondToAppointment } from "./actions";
+import { respondToAppointment, fulfillRequest } from "./actions";
 
 type AppointmentRow = {
   id: string;
@@ -35,7 +35,7 @@ export default async function EgitmenPaneliPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data }, { data: instructor }] = await Promise.all([
+  const [{ data }, { data: instructor }, { data: reqData }] = await Promise.all([
     supabase
       .from("appointments")
       .select(
@@ -48,7 +48,19 @@ export default async function EgitmenPaneliPage() {
       .select("can_generate_color_analysis, can_write_manual_results")
       .eq("id", user.id)
       .single(),
+    supabase
+      .from("work_requests")
+      .select("id, work_title, created_at, member:profiles(display_name)")
+      .eq("status", "pending")
+      .neq("member_id", user.id)
+      .order("created_at"),
   ]);
+  const workRequests = (reqData ?? []) as unknown as {
+    id: string;
+    work_title: string;
+    created_at: string;
+    member: { display_name: string } | null;
+  }[];
 
   const canGenerateColorAnalysis = instructor?.can_generate_color_analysis ?? false;
   const canWriteManualResults = instructor?.can_write_manual_results ?? false;
@@ -110,6 +122,38 @@ export default async function EgitmenPaneliPage() {
             </div>
           ))}
         </div>
+
+        <section className="mb-8">
+          <h2 className="mb-1 font-display text-[17px]">
+            Eğitim Talepleri{" "}
+            <span className="font-mono text-sm text-ink-faint">({workRequests.length})</span>
+          </h2>
+          <p className="mb-3 text-xs text-ink-faint">
+            Verdiğin eğitimler için üyelerin gönderdiği talepler. Sonucu yazıyla ve/veya PDF olarak yükle; üye kendi profilinde görür.
+          </p>
+          <div className="flex flex-col gap-3">
+            {workRequests.map((r) => (
+              <div key={r.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm" style={{ borderLeft: "4px solid #b8566b" }}>
+                <div className="text-sm font-bold">{r.work_title}</div>
+                <div className="mb-3 text-xs text-ink-faint">
+                  {r.member?.display_name} · {new Date(r.created_at).toLocaleDateString("tr-TR")}
+                </div>
+                <form action={fulfillRequest.bind(null, r.id)} className="flex flex-col gap-2">
+                  <textarea name="resultText" rows={4} placeholder="Sonuç / geri bildirim metni" className="rounded-lg border border-line bg-card px-3 py-2 text-sm" />
+                  <input type="file" name="pdf" accept="application/pdf" className="text-xs" />
+                  <button className="self-start rounded-lg bg-brand px-3.5 py-2 text-xs font-semibold text-brand-ink">
+                    Gönder ve Tamamla
+                  </button>
+                </form>
+              </div>
+            ))}
+            {workRequests.length === 0 && (
+              <p className="rounded-xl border border-line bg-card p-4 text-sm text-ink-faint">
+                Bekleyen eğitim talebi yok.
+              </p>
+            )}
+          </div>
+        </section>
 
         <section className="mb-8">
           <h2 className="mb-3 font-display text-[17px]">

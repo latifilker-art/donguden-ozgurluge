@@ -3,30 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export async function setMembershipTier(
-  memberId: string,
-  formData: FormData,
-): Promise<void> {
+export async function setMemberLevel(memberId: string, formData: FormData): Promise<void> {
   const supabase = await createClient();
-  const tier = String(formData.get("tier") ?? "temel");
+  const v = String(formData.get("level") ?? "");
+  const level = v === "baslangic" || v === "temel" || v === "ileri" ? v : null;
 
-  const periodEnd = new Date();
-  periodEnd.setDate(periodEnd.getDate() + 30);
-
-  const { error } = await supabase.from("subscriptions").upsert(
-    {
-      member_id: memberId,
-      plan: tier,
-      status: "active",
-      current_period_end: tier === "temel" ? null : periodEnd.toISOString(),
-    },
-    { onConflict: "member_id" },
-  );
-
-  if (error) {
-    console.error("setMembershipTier failed:", error.message);
-    return;
-  }
+  const { error } = await supabase
+    .from("profiles")
+    .update({ level_override: level })
+    .eq("id", memberId);
+  if (error) console.error("setMemberLevel failed:", error.message);
 
   revalidatePath("/admin/uyelikler");
+  revalidatePath("/profilim");
 }

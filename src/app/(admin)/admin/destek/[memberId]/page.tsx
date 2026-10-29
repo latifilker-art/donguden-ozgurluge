@@ -118,10 +118,10 @@ export default async function DestekMemberPage({
   const [{ data: details }, { data: rhythm }, { data: works }, { data: appointments }, { data: colorAnalysis }] =
     await Promise.all([
       supabase
-        .from("profiles")
+        .from("profile_private")
         .select("phone, birth_date, address, emergency_contact")
         .eq("id", memberId)
-        .single(),
+        .maybeSingle(),
       supabase
         .from("rhythm_entries")
         .select("item, completed_at")

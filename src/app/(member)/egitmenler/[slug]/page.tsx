@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppBar } from "@/components/app-bar";
 import { Avatar } from "@/components/avatar";
@@ -81,6 +82,14 @@ export default async function EgitmenProfilPage({
               <InstructorBadge />
             </div>
             <div className="mt-1 mb-3 text-sm text-ink-soft">{inst.tagline}</div>
+            {user?.id !== inst.id && (
+              <Link
+                href={`/mesajlar/${inst.id}`}
+                className="mb-3 inline-block rounded-lg border border-brand px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-soft"
+              >
+                Mesaj Gönder
+              </Link>
+            )}
             <div className="flex flex-wrap gap-1.5">
               {(inst.specialties ?? []).map((s: string) => (
                 <span

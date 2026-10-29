@@ -5,6 +5,8 @@ import { AvatarUploadInput } from "@/components/avatar-upload-input";
 import { createClient } from "@/lib/supabase/server";
 import { ColorProfileCard } from "@/components/color-profile";
 import { DailyBoard } from "@/components/daily-board";
+import { LevelBadge } from "@/components/level-badge";
+import { LEVELS, asLevel } from "@/lib/level";
 import { requestColorAnalysis, requestWork } from "./actions";
 import type { ColorAnalysisComputation } from "@/lib/color-analysis/numerology";
 import { signOut } from "@/lib/auth/actions";
@@ -44,9 +46,7 @@ export default async function ProfilimPage() {
   const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes, eveningHistoryRes, requestRes, workReqRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select(
-        "display_name, bio, avatar_url, created_at, phone, birth_date, address, emergency_contact",
-      )
+      .select("display_name, avatar_url, created_at")
       .eq("id", user.id)
       .single(),
     supabase.rpc("get_or_create_today_rhythm", { p_member_id: user.id }),
@@ -97,6 +97,11 @@ export default async function ProfilimPage() {
   const pendingWorks = new Set((workReqRes.data ?? []).map((r: { work_title: string }) => r.work_title));
 
   const profile = profileRes.data;
+  const { data: priv } = await supabase
+    .from("profile_private")
+    .select("phone, birth_date, address, emergency_contact, bio")
+    .eq("id", user.id)
+    .maybeSingle();
   const rhythm = (rhythmRes.data ?? []) as RhythmEntry[];
   const works = (worksRes.data ?? []) as unknown as ExternalWork[];
   const accessLog = (logRes.data ?? []) as AccessLogEntry[];
@@ -118,8 +123,8 @@ export default async function ProfilimPage() {
     entry_date: string;
     answer_text: string;
   }[];
-  const tier = subRes.data?.plan ?? "temel";
-  const tierMeta = TIER_LABEL[tier] ?? TIER_LABEL.temel;
+  const { data: levelRaw } = await supabase.rpc("member_level", { p_member: user.id });
+  const level = asLevel(levelRaw);
 
   const completedToday = rhythm.filter((r) => r.completed_at).length;
   const displayName = profile?.display_name ?? user.email ?? "?";
@@ -165,11 +170,10 @@ export default async function ProfilimPage() {
                 </label>
               </form>
               <h2 className="font-display text-lg">{displayName}</h2>
-              <span
-                className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold ${tierMeta.pill}`}
-              >
-                {tierMeta.label} üye
-              </span>
+              <div className="mt-2">
+                <LevelBadge level={level} />
+              </div>
+              <p className="mt-2 text-[11px] leading-snug text-ink-faint">{LEVELS[level].hint}</p>
               {profile?.created_at && (
                 <div className="mt-2 text-xs text-ink-faint">
                   {formatDate(profile.created_at)}&apos;den beri üye
@@ -263,7 +267,7 @@ export default async function ProfilimPage() {
                       <p className="text-xs text-neg">Önceki talebin onaylanmadı, bilgilerini kontrol edip tekrar gönderebilirsin.</p>
                     )}
                     <input name="fullName" required defaultValue={displayName} placeholder="Ad Soyad (kimlikteki gibi)" className="rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm" />
-                    <input name="birthDate" type="date" required defaultValue={profile?.birth_date ?? ""} className="rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm" />
+                    <input name="birthDate" type="date" required defaultValue={priv?.birth_date ?? ""} className="rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm" />
                     <button type="submit" className="self-start rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-brand-ink">Analiz Talep Et</button>
                   </form>
                 )}
@@ -302,7 +306,7 @@ export default async function ProfilimPage() {
                     id="bio"
                     name="bio"
                     rows={3}
-                    defaultValue={profile?.bio ?? ""}
+                    defaultValue={priv?.bio ?? ""}
                     placeholder="Kendinle ilgili birkaç kelime…"
                     className="w-full resize-y rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   />
@@ -319,7 +323,7 @@ export default async function ProfilimPage() {
                       id="phone"
                       name="phone"
                       type="tel"
-                      defaultValue={profile?.phone ?? ""}
+                      defaultValue={priv?.phone ?? ""}
                       placeholder="05xx xxx xx xx"
                       className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
@@ -335,7 +339,7 @@ export default async function ProfilimPage() {
                       id="birthDate"
                       name="birthDate"
                       type="date"
-                      defaultValue={profile?.birth_date ?? ""}
+                      defaultValue={priv?.birth_date ?? ""}
                       className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                   </div>
@@ -351,7 +355,7 @@ export default async function ProfilimPage() {
                     id="address"
                     name="address"
                     rows={2}
-                    defaultValue={profile?.address ?? ""}
+                    defaultValue={priv?.address ?? ""}
                     placeholder="Kamp/kargo gibi organizasyonlar için"
                     className="w-full resize-y rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   />
@@ -366,7 +370,7 @@ export default async function ProfilimPage() {
                   <input
                     id="emergencyContact"
                     name="emergencyContact"
-                    defaultValue={profile?.emergency_contact ?? ""}
+                    defaultValue={priv?.emergency_contact ?? ""}
                     placeholder="Ad Soyad — telefon"
                     className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   />

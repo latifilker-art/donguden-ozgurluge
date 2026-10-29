@@ -55,7 +55,15 @@ export async function signIn(
     return { error: error.message, message: null };
   }
 
-  redirect("/profilim");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    : { data: null };
+  redirect(
+    profile?.role === "admin" ? "/admin" : profile?.role === "instructor" ? "/panel" : "/profilim",
+  );
 }
 
 export async function signOut() {

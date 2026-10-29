@@ -36,7 +36,7 @@ export async function DailyBoard({
 }) {
   const supabase = await createClient();
   const [{ data: profile }, { data: analysis }] = await Promise.all([
-    supabase.from("profiles").select("birth_date").eq("id", userId).single(),
+    supabase.from("profile_private").select("birth_date").eq("id", userId).maybeSingle(),
     supabase
       .from("color_analyses")
       .select("computation")
