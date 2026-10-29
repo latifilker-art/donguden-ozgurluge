@@ -2,9 +2,7 @@ import { AppBar } from "@/components/app-bar";
 import { createClient } from "@/lib/supabase/server";
 import { toggleRhythmItem, saveEveningAnswer } from "./actions";
 import type { RhythmEntry, RhythmItem } from "@/lib/types";
-import Link from "next/link";
-import { DailyPlanCard } from "@/components/color-profile";
-import type { ColorAnalysisComputation } from "@/lib/color-analysis/numerology";
+import { DailyBoard } from "@/components/daily-board";
 
 const EVENING_QUESTIONS = [
   "Bugün seni en çok ne değiştirdi?",
@@ -66,20 +64,14 @@ export default async function BugunPage() {
     p_member_id: user.id,
   });
   const rhythm = (data ?? []) as RhythmEntry[];
-  const { data: analysis } = await supabase
-    .from("color_analyses")
-    .select("computation")
-    .eq("member_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const computation = analysis?.computation as ColorAnalysisComputation | undefined;
+  const { data: me } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+  const profileName = (me?.display_name as string | undefined) ?? "";
   const completedToday = rhythm.filter((r) => r.completed_at).length;
 
   return (
     <>
       <AppBar active="/bugun" />
-      <div className="mx-auto max-w-2xl px-7 py-8">
+      <div className="mx-auto max-w-3xl px-7 py-8">
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
           <div>
             <p className="mb-1 font-mono text-[11px] tracking-wide text-brand uppercase">
@@ -92,6 +84,10 @@ export default async function BugunPage() {
           <span className="rounded-full bg-surface-2 px-3 py-1.5 font-mono text-sm text-ink-soft">
             {completedToday} / 4 tamamlandı
           </span>
+        </div>
+
+        <div className="mb-6">
+          <DailyBoard userId={user.id} name={profileName} doneToday={completedToday} />
         </div>
 
         <div className="rounded-xl border border-line bg-card p-1.5 shadow-sm">
@@ -243,18 +239,6 @@ export default async function BugunPage() {
           })}
         </div>
 
-        <div className="mt-6">
-          {computation ? (
-            <DailyPlanCard computation={computation} />
-          ) : (
-            <Link
-              href="/profilim"
-              className="block rounded-2xl border border-dashed border-brand bg-brand-soft p-5 text-sm text-brand"
-            >
-              Renk analizini talep et — sana özel günlük olumlama ve yapılacaklar listesi burada görünsün →
-            </Link>
-          )}
-        </div>
       </div>
     </>
   );

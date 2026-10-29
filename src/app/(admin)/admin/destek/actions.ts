@@ -57,3 +57,18 @@ export async function uploadWorkPdf(
   revalidatePath(`/admin/destek/${memberId}`);
   revalidatePath("/profilim");
 }
+
+export async function sendWorkText(memberId: string, formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const workTitle = String(formData.get("workTitle") ?? "Kalbin Rehberliği");
+  const text = String(formData.get("resultText") ?? "").trim();
+  if (!text) return;
+  const { error } = await supabase.rpc("save_manual_work_result", {
+    p_member_id: memberId,
+    p_work_title: workTitle,
+    p_result_text: text,
+  });
+  if (error) console.error("sendWorkText failed:", error.message);
+  revalidatePath(`/admin/destek/${memberId}`);
+  revalidatePath("/profilim");
+}

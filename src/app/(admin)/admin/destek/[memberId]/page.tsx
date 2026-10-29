@@ -3,7 +3,7 @@ import { AppBar } from "@/components/app-bar";
 import { ColorProfileCard } from "@/components/color-profile";
 import type { ColorAnalysisComputation } from "@/lib/color-analysis/numerology";
 import { createClient } from "@/lib/supabase/server";
-import { logMemberAccess, uploadWorkPdf } from "../actions";
+import { logMemberAccess, uploadWorkPdf, sendWorkText } from "../actions";
 
 const RHYTHM_LABEL: Record<string, string> = {
   morning_affirmation: "Sabah Olumlaması",
@@ -265,6 +265,23 @@ export default async function DestekMemberPage({
               <p className="p-4 text-sm text-ink-faint">Henüz başlanmamış.</p>
             )}
           </div>
+        </section>
+
+        <section className="mb-6">
+          <h2 className="mb-3 font-display text-[16px]">Çalışma Sonucunu Yazıyla Gönder</h2>
+          <form
+            action={sendWorkText.bind(null, memberId)}
+            className="flex flex-col gap-3 rounded-xl border border-line bg-card p-4 shadow-sm"
+          >
+            <select name="workTitle" className="rounded-lg border border-line bg-card px-3 py-2.5 text-sm">
+              <option value="Kalbin Rehberliği">Kalbin Rehberliği</option>
+              <option value="Human Design">Human Design</option>
+            </select>
+            <textarea name="resultText" rows={5} required placeholder="Sonuç metni…" className="rounded-lg border border-line bg-card px-3 py-2 text-sm" />
+            <button type="submit" className="self-start rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-brand-ink">
+              Üyeye Gönder
+            </button>
+          </form>
         </section>
 
         <section className="mb-6">

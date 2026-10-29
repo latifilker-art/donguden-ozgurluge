@@ -112,3 +112,21 @@ export async function requestColorAnalysis(formData: FormData): Promise<void> {
   await supabase.from("profiles").update({ birth_date: birthDate }).eq("id", user.id);
   revalidatePath("/profilim");
 }
+
+export async function requestWork(workTitle: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data: existing } = await supabase
+    .from("work_requests")
+    .select("id")
+    .eq("member_id", user.id)
+    .eq("work_title", workTitle)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (existing) return;
+  await supabase.from("work_requests").insert({ member_id: user.id, work_title: workTitle });
+  revalidatePath("/profilim");
+}

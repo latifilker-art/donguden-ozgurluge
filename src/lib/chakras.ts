@@ -7,3 +7,15 @@ export const CHAKRAS = [
   { key: "ucuncu-goz", name: "Üçüncü Göz", hz: 852, color: "#4a4a9c", desc: "Sezgi, içgörü, farkındalık" },
   { key: "tepe", name: "Tepe Çakrası", hz: 963, color: "#8a5aa8", desc: "Bilinç, bütünlük, ruhsal bağ" },
 ];
+
+export const COLOR_TO_CHAKRA: Record<string, string> = {
+  Kırmızı: "kok",
+  Turuncu: "sakral",
+  Sarı: "solar",
+  Yeşil: "kalp",
+  Mavi: "bogaz",
+  İndigo: "ucuncu-goz",
+  Menekşe: "tepe",
+  Gülkurusu: "kalp",
+  Altın: "tepe",
+};

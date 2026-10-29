@@ -3,8 +3,9 @@ import { AppBar } from "@/components/app-bar";
 import { Avatar } from "@/components/avatar";
 import { AvatarUploadInput } from "@/components/avatar-upload-input";
 import { createClient } from "@/lib/supabase/server";
-import { ColorProfileCard, DailyPlanCard } from "@/components/color-profile";
-import { requestColorAnalysis } from "./actions";
+import { ColorProfileCard } from "@/components/color-profile";
+import { DailyBoard } from "@/components/daily-board";
+import { requestColorAnalysis, requestWork } from "./actions";
 import type { ColorAnalysisComputation } from "@/lib/color-analysis/numerology";
 import { signOut } from "@/lib/auth/actions";
 import { uploadAvatar, updateProfile } from "./actions";
@@ -40,7 +41,7 @@ export default async function ProfilimPage() {
   // (member)/layout.tsx zaten girişsiz kullanıcıyı /giris'e yönlendiriyor.
   if (!user) return null;
 
-  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes, eveningHistoryRes, requestRes] = await Promise.all([
+  const [profileRes, rhythmRes, worksRes, logRes, subRes, colorAnalysisRes, eveningHistoryRes, requestRes, workReqRes] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -87,7 +88,13 @@ export default async function ProfilimPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("work_requests")
+      .select("work_title")
+      .eq("member_id", user.id)
+      .eq("status", "pending"),
   ]);
+  const pendingWorks = new Set((workReqRes.data ?? []).map((r: { work_title: string }) => r.work_title));
 
   const profile = profileRes.data;
   const rhythm = (rhythmRes.data ?? []) as RhythmEntry[];
@@ -234,10 +241,11 @@ export default async function ProfilimPage() {
               </span>
             </Link>
 
+            <DailyBoard userId={user.id} name={displayName} doneToday={completedToday} />
+
             {colorComputation ? (
               <>
                 <ColorProfileCard computation={colorComputation} />
-                <DailyPlanCard computation={colorComputation} />
               </>
             ) : (
               <div className="rounded-2xl border border-line bg-card p-5 shadow-sm">
@@ -421,9 +429,19 @@ export default async function ProfilimPage() {
                             Sonuç hazır ↓
                           </span>
                         ) : (
-                          <span className="text-xs text-ink-faint">
-                            Eğitmenin işaretlemesini bekliyor
-                          </span>
+                          pendingWorks.has(work.title) ? (
+                            <span className="rounded-full bg-gold-soft px-2.5 py-1 text-[11px] font-semibold text-gold">
+                              Talep gönderildi
+                            </span>
+                          ) : work.title === "Renk Analizi" ? (
+                            <span className="text-xs text-ink-faint">Yukarıdan talep et</span>
+                          ) : (
+                            <form action={requestWork.bind(null, work.title)}>
+                              <button type="submit" className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-semibold text-brand-ink">
+                                Talep Et
+                              </button>
+                            </form>
+                          )
                         )}
                       </div>
                       {resultText && (
