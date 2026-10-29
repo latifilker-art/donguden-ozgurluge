@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
+import { NavTabs } from "@/components/nav-tabs";
 import { createClient } from "@/lib/supabase/server";
 
 type Tab = { href: string; label: string };
@@ -28,7 +29,12 @@ const ADMIN_TABS: Tab[] = [
   { href: "/admin", label: "Yönetim" },
   { href: "/admin/talepler", label: "Talepler" },
   { href: "/admin/uyeler", label: "Üyeler" },
+  { href: "/admin/uyelikler", label: "Seviyeler" },
   { href: "/admin/egitmenler", label: "Eğitmenler" },
+  { href: "/admin/destek", label: "Destek" },
+  { href: "/admin/etkinlikler", label: "Etkinlikler" },
+  { href: "/admin/fotograflar", label: "Fotoğraflar" },
+  { href: "/admin/ses-kutuphanesi", label: "Ses" },
   { href: "/mesajlar", label: "Mesajlar" },
 ];
 
@@ -67,48 +73,25 @@ export async function AppBar({ active }: { active?: string }) {
     unread = count ?? 0;
   }
 
-  const tabs = user ? (TABS_BY_ROLE[role] ?? MEMBER_TABS) : MEMBER_TABS;
+  const tabs = user ? (TABS_BY_ROLE[role] ?? MEMBER_TABS) : [];
   const home = role === "admin" ? "/admin" : role === "instructor" ? "/panel" : "/profilim";
-  const isActive = (href: string) =>
-    href === active || (!active && false);
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line bg-card px-7 py-4">
+    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line bg-card px-5 py-3.5 md:px-7">
       <Link
         href="/"
-        className="flex items-center gap-2.5 font-display text-base italic text-brand"
+        className="flex shrink-0 items-center gap-2.5 font-display text-base italic text-brand"
       >
         <span className="h-2 w-2 shrink-0 rounded-full bg-brand" aria-hidden="true" />
         Döngüden Özgürlüğe
       </Link>
-      <nav className="flex flex-wrap gap-1">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            aria-current={isActive(tab.href) ? "page" : undefined}
-            className={
-              "relative rounded-md px-3.5 py-1.5 text-sm " +
-              (isActive(tab.href)
-                ? "bg-brand-soft font-semibold text-brand"
-                : "text-ink-faint hover:text-ink")
-            }
-          >
-            {tab.label}
-            {tab.href === "/mesajlar" && unread > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-neg px-1 text-[10px] font-bold text-white">
-                {unread}
-              </span>
-            )}
-          </Link>
-        ))}
-      </nav>
+      {tabs.length > 0 && <NavTabs tabs={tabs} active={active} unread={unread} />}
       {user ? (
-        <Link href={home} aria-label="Hesabım">
+        <Link href={home} aria-label="Hesabım" className="shrink-0">
           <Avatar name={displayName} avatarUrl={avatarUrl} size={32} className="text-xs" />
         </Link>
       ) : (
-        <Avatar name="?" size={32} className="text-xs" />
+        <span />
       )}
     </header>
   );
